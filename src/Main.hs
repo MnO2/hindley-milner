@@ -7,7 +7,9 @@ import HM.Parser
 
 import Text.PrettyPrint.HughesPJ
 import Text.ParserCombinators.Parsec
-import System.Environment (getArgs, exitWith, ExitCode(..))
+import System.Exit (exitWith, ExitCode(..))
+import System.Environment (getArgs)
+import System.IO (hPutStrLn, stderr)
 
 
 main :: IO ()

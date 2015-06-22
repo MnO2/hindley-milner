@@ -18,6 +18,8 @@ module HM.Monad(
 
 import HM.Types
 
+import Control.Applicative
+import Control.Monad
 import qualified Data.Map as Map
 import Text.PrettyPrint.HughesPJ
 import Data.IORef
@@ -44,6 +46,15 @@ instance Monad Tc where
                               ; case r1 of
                                   Left err -> return (Left err)
                                   Right v  -> unTc (k v) env })
+
+instance Applicative Tc where
+  pure = return
+  (<*>) = ap
+
+
+instance Functor Tc where
+  fmap f x = pure f <*> x
+
 
 failTc :: Doc -> Tc a   -- Fail unconditionally
 failTc d = fail (docToString d)
