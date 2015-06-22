@@ -1,4 +1,4 @@
-module TcMonad(
+module HM.Monad(
         Tc,     -- The monad type constructor
         runTc, ErrMsg, lift, check,
 
@@ -16,15 +16,13 @@ module TcMonad(
         
     ) where
 
-import BasicTypes
+import HM.Types
+
 import qualified Data.Map as Map
 import Text.PrettyPrint.HughesPJ
 import Data.IORef
-import List( nub, (\\) )
+import Data.List ( nub, (\\) )
 
-------------------------------------------
---      The monad itself                --
-------------------------------------------
 
 data TcEnv 
   = TcEnv { uniqs   :: IORef Uniq,         -- Unique supply
@@ -32,6 +30,8 @@ data TcEnv
     }   
 
 newtype Tc a = Tc (TcEnv -> IO (Either ErrMsg a))
+
+
 unTc :: Tc a ->   (TcEnv -> IO (Either ErrMsg a))
 unTc (Tc a)  = a
 

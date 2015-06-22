@@ -1,33 +1,25 @@
-module TcTermDM where
+module HM.Normal where
 
-import BasicTypes
+import HM.Types
+import HM.Monad
+
 import Data.IORef
-import TcMonad
-import List( (\\) )
+import Data.List( (\\) )
+
 import Text.PrettyPrint.HughesPJ
 
-------------------------------------------
---      The top-level wrapper           --
-------------------------------------------
 
 typecheck :: Term -> Tc Sigma
 typecheck e = do { ty <- inferSigma e
                  ; zonkType ty }
 
------------------------------------
---      The expected type       -- 
------------------------------------
 
 data Expected a = Infer (IORef a) | Check a
 
 
-------------------------------------------
---      tcRho, and its variants         --
-------------------------------------------
-
 checkRho :: Term -> Rho -> Tc ()
--- Invariant: the Rho is always in weak-prenex form
 checkRho expr ty = tcRho expr (Check ty)
+
 
 inferRho :: Term -> Tc Rho
 inferRho expr 
@@ -36,10 +28,9 @@ inferRho expr
        ; readTcRef ref }
 
 tcRho :: Term -> Expected Rho -> Tc ()
--- Invariant: if the second argument is (Check rho),
--- 	      then rho is in weak-prenex form
 tcRho (Lit _) exp_ty
   = instSigma intType exp_ty
+
 
 tcRho (Var v) exp_ty 
   = do { v_sigma <- lookupVar v 
@@ -68,10 +59,6 @@ tcRho (Ann body ann_ty) exp_ty
    = do { checkSigma body ann_ty
         ; instSigma ann_ty exp_ty }
 
-
-------------------------------------------
---      inferSigma and checkSigma
-------------------------------------------
 
 inferSigma :: Term -> Tc Sigma
 inferSigma e

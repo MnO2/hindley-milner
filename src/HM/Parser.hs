@@ -1,11 +1,6 @@
-module Parser where
+module HM.Parser where
 
-import BasicTypes hiding( dot )
-
--- import Text.Read( lexP, Read(..), Lexeme(..) )
--- import Text.ParserCombinators.Parser
--- import GHC.Read( parens )
-
+import HM.Types hiding( dot )
 import Text.ParserCombinators.Parsec
 import qualified Text.ParserCombinators.Parsec.Token as P
 import Text.ParserCombinators.Parsec.Language( haskellDef )

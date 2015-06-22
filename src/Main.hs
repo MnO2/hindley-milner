@@ -1,14 +1,14 @@
 module Main where
 
-import TcTerm
-import TcMonad
-import BasicTypes
-import Parser
+import HM.Normal
+import HM.Monad
+import HM.Types
+import HM.Parser
+
 import Text.PrettyPrint.HughesPJ
 import Text.ParserCombinators.Parsec
+import System.Environment (getArgs, exitWith, ExitCode(..))
 
-import IO (hPutStrLn, stderr)
-import System (getArgs, exitWith, ExitCode(..))
 
 main :: IO ()
 main = do args <- getArgs
@@ -67,6 +67,7 @@ parseFile filename
 			  ; return Nothing }
 	   Right ans -> return (Just ans) }
 
+
 parseString :: String -> IO (Maybe Term)
 parseString str
   = do { let r = parse parseTerm "<interactive>" str
@@ -74,3 +75,4 @@ parseString str
 	   Left err -> do { putStrLn ("Parse error: " ++ show err) 
 			  ; return Nothing }
 	   Right ans -> return (Just ans) }
+

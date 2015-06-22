@@ -1,8 +1,8 @@
-module TcTerm where
+module HM.HigherRank where
 
-import BasicTypes
+import HM.Types
+import HM.Monad
 import Data.IORef
-import TcMonad
 import List( (\\) )
 import Text.PrettyPrint.HughesPJ
 
