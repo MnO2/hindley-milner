@@ -5,20 +5,13 @@ import Data.IORef
 import Data.List (nub)
 import Data.Maybe (fromMaybe)
 
-infixr 4 -->     -- The arrow type constructor
-infixl 4 `App`   -- Application
-
------------------------------------
---      Ubiquitous types        -- 
------------------------------------
-
-type Name = String      -- Names are very simple
+infixr 4 -->
+infixl 4 `App`
 
 
------------------------------------
---      Expressions             -- 
------------------------------------
-                                  -- Examples below
+type Name = String
+
+
 data Term = Var Name              -- x
           | Lit Int               -- 3
           | App Term Term         -- f x
@@ -27,15 +20,12 @@ data Term = Var Name              -- x
           | Let Name Term Term    -- let x = f y in x+1
           | Ann Term Sigma        -- (f x) :: Int
 
+
 atomicTerm :: Term -> Bool
 atomicTerm (Var _) = True
 atomicTerm (Lit _) = True
 atomicTerm _       = False
 
-
------------------------------------
---      Types                   -- 
------------------------------------
 
 type Sigma = Type
 type Rho   = Type	-- No top-level ForAll
@@ -47,11 +37,11 @@ data Type = ForAll [TyVar] Rho	  -- Forall type
 	  | TyVar  TyVar      	  -- Always bound by a ForAll
 	  | MetaTv MetaTv     	  -- A meta type variable
 
+
 data TyVar
   = BoundTv String		-- A type variable bound by a ForAll
-
   | SkolemTv String Uniq	-- A skolem constant; the String is 
-				-- just to improve error messages
+
 
 data MetaTv = Meta Uniq TyRef  -- Can unify with any tau-type
 
