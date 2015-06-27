@@ -1,6 +1,7 @@
 module Main where
 
-import HM.Normal
+{-import HM.Normal-}
+import HM.HigherRank
 import HM.Monad
 import HM.Types
 import HM.Parser

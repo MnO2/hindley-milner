@@ -3,31 +3,22 @@ module HM.HigherRank where
 import HM.Types
 import HM.Monad
 import Data.IORef
-import List( (\\) )
+import Data.List ((\\))
 import Text.PrettyPrint.HughesPJ
 
-------------------------------------------
---      The top-level wrapper           --
-------------------------------------------
 
 typecheck :: Term -> Tc Sigma
 typecheck e = do { ty <- inferSigma e
                  ; zonkType ty }
 
------------------------------------
---      The expected type       -- 
------------------------------------
 
 data Expected a = Infer (IORef a) | Check a
 
 
-------------------------------------------
---      tcRho, and its variants         --
-------------------------------------------
 
 checkRho :: Term -> Rho -> Tc ()
--- Invariant: the Rho is always in weak-prenex form
 checkRho expr ty = tcRho expr (Check ty)
+
 
 inferRho :: Term -> Tc Rho
 inferRho expr 
@@ -36,8 +27,6 @@ inferRho expr
        ; readTcRef ref }
 
 tcRho :: Term -> Expected Rho -> Tc ()
--- Invariant: if the second argument is (Check rho),
--- 	      then rho is in weak-prenex form
 tcRho (Lit _) exp_ty
   = instSigma intType exp_ty
 
@@ -78,9 +67,6 @@ tcRho (Ann body ann_ty) exp_ty
         ; instSigma ann_ty exp_ty }
 
 
-------------------------------------------
---      inferSigma and checkSigma
-------------------------------------------
 
 inferSigma :: Term -> Tc Sigma
 inferSigma e
@@ -101,14 +87,9 @@ checkSigma expr sigma
        ; check (null bad_tvs)
                (text "Type not polymorphic enough") }
 
-------------------------------------------
---      Subsumption checking            --
-------------------------------------------
+
 
 subsCheck :: Sigma -> Sigma -> Tc ()
--- (subsCheck args off exp) checks that 
---     'off' is at least as polymorphic as 'args -> exp'
-
 subsCheck sigma1 sigma2        -- Rule DEEP-SKOL
   = do { (skol_tvs, rho2) <- skolemise sigma2
        ; subsCheckRho sigma1 rho2
@@ -122,7 +103,6 @@ subsCheck sigma1 sigma2        -- Rule DEEP-SKOL
     }
 
 subsCheckRho :: Sigma -> Rho -> Tc ()
--- Invariant: the second argument is in weak-prenex form
 
 subsCheckRho sigma1@(ForAll _ _) rho2	 -- Rule SPEC
   = do { rho1 <- instantiate sigma1
@@ -141,9 +121,8 @@ subsCheckFun :: Sigma -> Rho -> Sigma -> Rho -> Tc ()
 subsCheckFun a1 r1 a2 r2 
   = do { subsCheck a2 a1 ; subsCheckRho r1 r2 }
 
+
 instSigma :: Sigma -> Expected Rho -> Tc ()
--- Invariant: if the second argument is (Check rho),
--- 	      then rho is in weak-prenex form
 instSigma t1 (Check t2) = subsCheckRho t1 t2
 instSigma t1 (Infer r)  = do { t1' <- instantiate t1
                              ; writeTcRef r t1' }
