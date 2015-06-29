@@ -1,0 +1,3 @@
+let g = \f1. Pair2 (f1 1) (f1 True)
+in let f = \x. x
+in g f

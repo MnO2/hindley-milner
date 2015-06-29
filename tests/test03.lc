@@ -1,0 +1,3 @@
+let g = \(f1 :: forall a. a -> a). Pair2 (f1 1) (f1 True)
+in let f = \x. x
+in g f
