@@ -1,1 +1,1 @@
-let f = \x. \y. y in (f :: forall a. a -> (forall b. b))
+let f = \x. \y. y in f

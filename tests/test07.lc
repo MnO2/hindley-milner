@@ -1,0 +1,1 @@
+let g = (\y. let f = \x. x in f) in g
