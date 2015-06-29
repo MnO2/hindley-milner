@@ -69,6 +69,7 @@ inferSigma e
         ; let forall_tvs = res_tvs \\ env_tvs
         ; quantify forall_tvs exp_ty }
 
+
 checkSigma :: Term -> Sigma -> Tc ()
 checkSigma expr sigma
   = do { (skol_tvs, rho) <- skolemise sigma
@@ -79,13 +80,9 @@ checkSigma expr sigma
        ; check (null bad_tvs)
                (text "Type not polymorphic enough") }
 
-------------------------------------------
---      Subsumption checking            --
-------------------------------------------
+
 
 instSigma :: Sigma -> Expected Rho -> Tc ()
--- Invariant: if the second argument is (Check rho),
--- 	      then rho is in weak-prenex form
 instSigma t1 (Check t2) = unify t1 t2
 instSigma t1 (Infer r)  = do { t1' <- instantiate t1
                              ; writeTcRef r t1' }

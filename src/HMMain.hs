@@ -50,7 +50,7 @@ tyvarA = BoundTv "a"
 initTypeEnv :: [(Name,Sigma)]
 initTypeEnv
       = [ ("+",    intType --> intType --> intType)
-        , ("if",    ForAll [tyvarA ] (boolType --> TyVar tyvarA --> TyVar tyvarA))
+        , ("if",    ForAll [tyvarA] (boolType --> TyVar tyvarA --> TyVar tyvarA))
         , ("True",  boolType)
         , ("False", boolType)
         ]

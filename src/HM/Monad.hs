@@ -1,23 +1,17 @@
-module HM.Monad(
-        Tc,     -- The monad type constructor
+module HM.Monad
+(
+        Tc,
         runTc, ErrMsg, lift, check,
-
-        -- Environment manipulation
         extendVarEnv, lookupVar, 
- 	getEnvTypes, getFreeTyVars, getMetaTyVars,
-
-        -- Types and unification
+        getEnvTypes, getFreeTyVars, getMetaTyVars,
         newTyVarTy, 
         instantiate, skolemise, zonkType, quantify,
         unify, unifyFun,
-
-        -- Ref cells
         newTcRef, readTcRef, writeTcRef
-        
-    ) where
+) where
+
 
 import HM.Types
-
 import Control.Applicative
 import Control.Monad
 import qualified Data.Map as Map
@@ -26,10 +20,9 @@ import Data.IORef
 import Data.List ( nub, (\\) )
 
 
-data TcEnv 
-  = TcEnv { uniqs   :: IORef Uniq,         -- Unique supply
-            var_env :: Map.Map Name Sigma  -- Type environment for term variables
-    }   
+data TcEnv = TcEnv { uniqs   :: IORef Uniq,         -- Unique supply
+                     var_env :: Map.Map Name Sigma  -- Type environment for term variables
+                   }
 
 newtype Tc a = Tc (TcEnv -> IO (Either ErrMsg a))
 
@@ -37,7 +30,9 @@ newtype Tc a = Tc (TcEnv -> IO (Either ErrMsg a))
 unTc :: Tc a ->   (TcEnv -> IO (Either ErrMsg a))
 unTc (Tc a)  = a
 
+
 type ErrMsg = Doc
+
 
 instance Monad Tc where
    return x = Tc (\_env -> return (Right x))
@@ -64,24 +59,28 @@ check True  _ = return ()
 check False d = failTc d
 
 runTc :: [(Name,Sigma)] -> Tc a -> IO (Either ErrMsg a)
--- Run type-check, given an initial environment
 runTc binds (Tc tc)
   = do { ref <- newIORef 0
-       ; let { env = TcEnv { uniqs = ref, 
-                             var_env = Map.fromList binds } }
-       ; tc env }
+       ; let { env = TcEnv { uniqs = ref,
+                             var_env = Map.fromList binds 
+                           }
+             }
+       ; tc env
+       }
   where
-    
+
+
 lift :: IO a -> Tc a
--- Lift a state transformer action into the typechecker monad
--- ignores the environment and always succeeds
 lift st = Tc (\_env -> do { r <- st; return (Right r) })
+
 
 newTcRef :: a -> Tc (IORef a)
 newTcRef v = lift (newIORef v)
 
+
 readTcRef :: IORef a -> Tc a
 readTcRef r = lift (readIORef r)
+
 
 writeTcRef :: IORef a -> a -> Tc ()
 writeTcRef r v = lift (writeIORef r v)
@@ -154,14 +153,14 @@ instantiate ty
 skolemise :: Sigma -> Tc ([TyVar], Rho)
 -- Performs deep skolemisation, retuning the 
 -- skolem constants and the skolemised type
-skolemise (ForAll tvs ty)	-- Rule PRPOLY
+skolemise (ForAll tvs ty)  -- Rule PRPOLY
   = do { sks1 <- mapM newSkolemTyVar tvs
        ; (sks2, ty') <- skolemise (substTy tvs (map TyVar sks1) ty)
        ; return (sks1 ++ sks2, ty') }
-skolemise (Fun arg_ty res_ty)	-- Rule PRFUN
+skolemise (Fun arg_ty res_ty)  -- Rule PRFUN
   = do { (sks, res_ty') <- skolemise res_ty
        ; return (sks, Fun arg_ty res_ty') }
-skolemise ty 			-- Rule PRMONO
+skolemise ty       -- Rule PRMONO
   = return ([], ty)
 
 ------------------------------------------
@@ -190,19 +189,19 @@ allBinders = [ BoundTv [x]          | x <- ['a'..'z'] ] ++
 getEnvTypes :: Tc [Type]
   -- Get the types mentioned in the environment
 getEnvTypes = do { env <- getEnv; 
-	         ; return (Map.elems env) }
+           ; return (Map.elems env) }
 
 getMetaTyVars :: [Type] -> Tc [MetaTv]
 -- This function takes account of zonking, and returns a set
 -- (no duplicates) of unbound meta-type variables
 getMetaTyVars tys = do { tys' <- mapM zonkType tys
-		    ; return (metaTvs tys') }
+        ; return (metaTvs tys') }
 
 getFreeTyVars :: [Type] -> Tc [TyVar]
 -- This function takes account of zonking, and returns a set
 -- (no duplicates) of free type variables
 getFreeTyVars tys = do { tys' <- mapM zonkType tys
-		       ; return (freeTyVars tys') }
+           ; return (freeTyVars tys') }
 
 ------------------------------------------
 --      Zonking                         --
@@ -298,4 +297,4 @@ occursCheckErr tv ty
 badType :: Tau -> Bool
 -- Tells which types should never be encountered during unification
 badType (TyVar (BoundTv _)) = True
-badType _         	    = False
+badType _               = False

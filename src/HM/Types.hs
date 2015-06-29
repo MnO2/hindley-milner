@@ -28,19 +28,19 @@ atomicTerm _       = False
 
 
 type Sigma = Type
-type Rho   = Type	-- No top-level ForAll
-type Tau   = Type	-- No ForAlls anywhere
-
-data Type = ForAll [TyVar] Rho	  -- Forall type
-	  | Fun    Type Type 	  -- Function type
-	  | TyCon  TyCon      	  -- Type constants
-	  | TyVar  TyVar      	  -- Always bound by a ForAll
-	  | MetaTv MetaTv     	  -- A meta type variable
+type Rho   = Type   -- No top-level ForAll
+type Tau   = Type   -- No ForAlls anywhere
 
 
-data TyVar
-  = BoundTv String		-- A type variable bound by a ForAll
-  | SkolemTv String Uniq	-- A skolem constant; the String is 
+data Type = ForAll [TyVar] Rho    -- Forall type
+          | Fun    Type Type      -- Function type
+          | TyCon  TyCon          -- Type constants
+          | TyVar  TyVar          -- Always bound by a ForAll
+          | MetaTv MetaTv         -- A meta type variable
+
+
+data TyVar = BoundTv String          -- A type variable bound by a ForAll
+           | SkolemTv String Uniq  -- A skolem constant; the String is 
 
 
 data MetaTv = Meta Uniq TyRef  -- Can unify with any tau-type
@@ -49,8 +49,10 @@ type TyRef = IORef (Maybe Tau)
         -- 'Nothing' means the type variable is not substituted
         -- 'Just ty' means it has been substituted by 'ty'
 
+
 instance Eq MetaTv where
   (Meta u1 _) == (Meta u2 _) = u1 == u2
+
 
 instance Eq TyVar where
   (BoundTv s1)    == (BoundTv s2)    = s1 == s2
@@ -61,8 +63,6 @@ type Uniq = Int
 data TyCon = IntT | BoolT
            deriving( Eq )
 
----------------------------------
---      Constructors
 
 (-->) :: Sigma -> Sigma -> Sigma
 arg --> res = Fun arg res
@@ -71,33 +71,32 @@ intType, boolType :: Tau
 intType  = TyCon IntT
 boolType = TyCon BoolT
 
----------------------------------
---	Free and bound variables
+
 
 metaTvs :: [Type] -> [MetaTv]
 -- Get the MetaTvs from a type; no duplicates in result
 metaTvs tys = foldr go [] tys
   where
     go (MetaTv tv)   acc
-	| tv `elem` acc  = acc
-	| otherwise	 = tv : acc
+        | tv `elem` acc  = acc
+        | otherwise   = tv : acc
     go (TyVar _)     acc = acc
     go (TyCon _)     acc = acc
     go (Fun arg res) acc = go arg (go res acc)
-    go (ForAll _ ty) acc = go ty acc	-- ForAll binds TyVars only
+    go (ForAll _ ty) acc = go ty acc  -- ForAll binds TyVars only
 
 freeTyVars :: [Type] -> [TyVar]
 -- Get the free TyVars from a type; no duplicates in result
 freeTyVars tys = foldr (go []) [] tys
   where 
-    go :: [TyVar]	-- Ignore occurrences of bound type variables
-       -> Type		-- Type to look at
-       -> [TyVar]	-- Accumulates result
+    go :: [TyVar]  -- Ignore occurrences of bound type variables
+       -> Type    -- Type to look at
+       -> [TyVar]  -- Accumulates result
        -> [TyVar]
     go bound (TyVar tv)      acc 
-	| tv `elem` bound        = acc
-	| tv `elem` acc		 = acc
-	| otherwise		 = tv : acc
+        | tv `elem` bound        = acc
+        | tv `elem` acc     = acc
+        | otherwise     = tv : acc
     go bound (MetaTv _)      acc = acc
     go bound (TyCon _)       acc = acc
     go bound (Fun arg res)   acc = go bound arg (go bound res acc)
@@ -112,22 +111,18 @@ tyVarBndrs ty = nub (bndrs ty)
     bndrs (Fun arg res)     = bndrs arg ++ bndrs res
     bndrs _                 = []
 
+
 tyVarName :: TyVar -> String
 tyVarName (BoundTv n)    = n
 tyVarName (SkolemTv n _) = n
 
 
----------------------------------
---      Substitution
 
 type Env = [(TyVar, Tau)]
 
 substTy :: [TyVar] -> [Type] -> Type -> Type
--- Replace the specified quantified type variables by
--- given meta type variables
--- No worries about capture, because the two kinds of type
--- variable are distinct
 substTy tvs tys ty = subst_ty (tvs `zip` tys) ty
+
 
 subst_ty :: Env -> Type -> Type
 subst_ty env (Fun arg res)   = Fun (subst_ty env arg) (subst_ty env res)
@@ -146,12 +141,14 @@ subst_ty env (ForAll ns rho) = ForAll ns (subst_ty env' rho)
 class Outputable a where
   ppr :: a -> Doc
 
+
 docToString :: Doc -> String
 docToString = render
 
 dcolon, dot :: Doc
 dcolon = text "::"
 dot    = char '.'
+
 
 -------------- Pretty-printing terms ---------------------
 
@@ -201,17 +198,20 @@ instance Show Type where
    show t = docToString (ppr t)
 
 type Precedence = Int
+
+
 topPrec, arrPrec, tcPrec, atomicPrec :: Precedence
 topPrec    = 0  -- Top-level precedence
 arrPrec    = 1  -- Precedence of (a->b)
 tcPrec     = 2  -- Precedence of (T a b)
 atomicPrec = 3  -- Precedence of t
 
+
 precType :: Type -> Precedence
 precType (ForAll _ _) = topPrec
 precType (Fun _ _)    = arrPrec
-precType _            = atomicPrec   
-        -- All the types are be atomic
+precType _            = atomicPrec
+
 
 pprParendType :: Type -> Doc
 pprParendType ty = pprType tcPrec ty
@@ -231,6 +231,8 @@ ppr_type (Fun arg res)  = sep [pprType arrPrec arg <+> text "->",
 ppr_type (TyCon tc)     = ppr_tc tc
 ppr_type (TyVar n)      = ppr n
 ppr_type (MetaTv tv)    = ppr tv
+
+
 
 ppr_tc :: TyCon -> Doc
 ppr_tc IntT  = text "Int"
