@@ -6,33 +6,37 @@ import HM.Monad
 import HM.Types
 import HM.Parser
 
+import Control.Monad.IO.Class (liftIO)
 import Text.PrettyPrint.HughesPJ
 import Text.ParserCombinators.Parsec
 import System.Exit (exitWith, ExitCode(..))
+import System.Console.Haskeline
 import System.Environment (getArgs)
 import System.IO (hPutStrLn, stderr)
 
 
 main :: IO ()
-main = do args <- getArgs
-          case args of
-              [] -> getContents >>= tcs
-              [f] -> tcf f
-              _ -> do hPutStrLn stderr "Usage: foo [ FILE ]"
-                      exitWith (ExitFailure 1)
+main = do 
+  args <- getArgs
+  case args of 
+    [] -> runInputT defaultSettings loop
+    [f] -> tcf f
+    _ -> do hPutStrLn stderr "Usage: program [FILE] "
+            exitWith (ExitFailure 1)
+  where
+    loop :: InputT IO ()
+    loop = do
+      minput <- getInputLine "% "
+      case minput of
+        Nothing -> return ()
+        Just input -> do 
+          liftIO $ tcs input
+          loop
+
 
 
 tcs :: String -> IO ()
 tcs s = tc_help (parseString s)
-
-
-s1 :: String
-s1 = "\\x. \\y. x"
-
-s2 :: String
-s2 = "let add = (\\x. \\y. x) :: forall a. a -> a -> a in \
-     \ let id  = (\\x. x) :: forall a. a -> a in \
-     \ add id id"
 
 
 tcf :: String -> IO ()

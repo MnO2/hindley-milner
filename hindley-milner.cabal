@@ -20,7 +20,7 @@ executable hindley-milner
   main-is:             HMMain.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.8 && <4.9, pretty >=1.1 && <1.2, parsec >=3.1 && <3.2, containers >=0.5 && <0.6
+  build-depends:       base >=4.8 && <4.9, pretty >=1.1 && <1.2, parsec >=3.1 && <3.2, containers >=0.5 && <0.6, haskeline, transformers
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -29,6 +29,6 @@ executable higher-rank
   main-is:             HigherRankMain.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.8 && <4.9, pretty >=1.1 && <1.2, parsec >=3.1 && <3.2, containers >=0.5 && <0.6
+  build-depends:       base >=4.8 && <4.9, pretty >=1.1 && <1.2, parsec >=3.1 && <3.2, containers >=0.5 && <0.6, haskeline, transformers
   hs-source-dirs:      src
   default-language:    Haskell2010
