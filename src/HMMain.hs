@@ -1,7 +1,6 @@
 module Main where
 
-{-import HM.Normal-}
-import HM.HigherRank
+import HM.Normal
 import HM.Monad
 import HM.Types
 import HM.Parser
@@ -45,6 +44,7 @@ tcf f = tc_help (parseFile f)
 
 tyvarA :: TyVar
 tyvarA = BoundTv "a"
+
 
 tyvarB :: TyVar
 tyvarB = BoundTv "b"
@@ -90,4 +90,3 @@ parseString str
          Left err -> do { putStrLn ("Parse error: " ++ show err) 
                 ; return Nothing }
          Right ans -> return (Just ans) }
-

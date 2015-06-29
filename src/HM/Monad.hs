@@ -42,6 +42,7 @@ instance Monad Tc where
                                   Left err -> return (Left err)
                                   Right v  -> unTc (k v) env })
 
+
 instance Applicative Tc where
   pure = return
   (<*>) = ap
@@ -137,13 +138,10 @@ newUnique = Tc (\ (TcEnv {uniqs = ref}) ->
                ; return (Right uniq) })
 
 
-------------------------------------------
---      Instantiation                   --
-------------------------------------------
 
-instantiate :: Sigma -> Tc Rho
 -- Instantiate the topmost for-alls of the argument type
 -- with flexible type variables
+instantiate :: Sigma -> Tc Rho
 instantiate (ForAll tvs ty) 
   = do { tvs' <- mapM (\_ -> newMetaTyVar) tvs
        ; return (substTy tvs (map MetaTv tvs') ty) }
@@ -172,12 +170,10 @@ shallowskol (ForAll tvs ty) = do { sks1 <- mapM newSkolemTyVar tvs
                                  }
 shallowskol ty = return ([], ty)
 
-------------------------------------------
---      Quantification                  --
-------------------------------------------
 
-quantify :: [MetaTv] -> Rho -> Tc Sigma
+
 -- Quantify over the specified type variables (all flexible)
+quantify :: [MetaTv] -> Rho -> Tc Sigma
 quantify tvs ty
   = do { mapM_ bind (tvs `zip` new_bndrs)   -- 'bind' is just a cunning way 
        ; ty' <- zonkType ty                 -- of doing the substitution
@@ -193,32 +189,33 @@ allBinders :: [TyVar]    -- a,b,..z, a1, b1,... z1, a2, b2,...
 allBinders = [ BoundTv [x]          | x <- ['a'..'z'] ] ++
              [ BoundTv (x : show i) | i <- [1 :: Integer ..], x <- ['a'..'z']]
 
-------------------------------------------
---      Getting the free tyvars         --
-------------------------------------------
 
+
+-- Getting the free tyvars
 getEnvTypes :: Tc [Type]
-  -- Get the types mentioned in the environment
+-- Get the types mentioned in the environment
 getEnvTypes = do { env <- getEnv; 
            ; return (Map.elems env) }
 
-getMetaTyVars :: [Type] -> Tc [MetaTv]
+
 -- This function takes account of zonking, and returns a set
 -- (no duplicates) of unbound meta-type variables
+getMetaTyVars :: [Type] -> Tc [MetaTv]
 getMetaTyVars tys = do { tys' <- mapM zonkType tys
-        ; return (metaTvs tys') }
+                       ; return (metaTvs tys')
+                       }
 
-getFreeTyVars :: [Type] -> Tc [TyVar]
+
+
 -- This function takes account of zonking, and returns a set
 -- (no duplicates) of free type variables
+getFreeTyVars :: [Type] -> Tc [TyVar]
 getFreeTyVars tys = do { tys' <- mapM zonkType tys
            ; return (freeTyVars tys') }
 
-------------------------------------------
---      Zonking                         --
--- Eliminate any substitutions in the type
-------------------------------------------
 
+
+-- Eliminate any substitutions in the type
 zonkType :: Type -> Tc Type
 zonkType (ForAll ns ty) = do { ty' <- zonkType ty 
                              ; return (ForAll ns ty') }
@@ -236,13 +233,9 @@ zonkType (MetaTv tv)    -- A mutable type variable
                          ; return ty' } }
 
 
-------------------------------------------
---      Unification                     --
-------------------------------------------
-
+-- unification
 unify :: Tau -> Tau -> Tc ()
-
-unify ty1 ty2 
+unify ty1 ty2
   | badType ty1 || badType ty2  -- Compiler error
   = failTc (text "Panic! Unexpected types in unification:" <+> 
             vcat [ppr ty1, ppr ty2])
@@ -262,17 +255,19 @@ unify (TyCon tc1) (TyCon tc2)
 
 unify ty1 ty2 = failTc (text "Cannot unify types:" <+> vcat [ppr ty1, ppr ty2])
 
------------------------------------------
-unifyVar :: MetaTv -> Tau -> Tc ()
+
 -- Invariant: tv1 is a flexible type variable
+unifyVar :: MetaTv -> Tau -> Tc ()
 unifyVar tv1 ty2        -- Check whether tv1 is bound
-  = do { mb_ty1 <- readTv tv1   
+  = do { mb_ty1 <- readTv tv1
        ; case mb_ty1 of
            Just ty1 -> unify ty1 ty2
            Nothing  -> unifyUnboundVar tv1 ty2 }
 
-unifyUnboundVar :: MetaTv -> Tau -> Tc ()
+
+
 -- Invariant: the flexible type variable tv1 is not bound
+unifyUnboundVar :: MetaTv -> Tau -> Tc ()
 unifyUnboundVar tv1 ty2@(MetaTv tv2)
   = do { -- We know that tv1 /= tv2 (else the 
          -- top case in unify would catch it)
@@ -288,24 +283,25 @@ unifyUnboundVar tv1 ty2
          else
             writeTv tv1 ty2 }
 
------------------------------------------
-unifyFun :: Rho -> Tc (Sigma, Rho)
+
 --      (arg,res) <- unifyFunTy fun
 -- unifies 'fun' with '(arg -> res)'
+unifyFun :: Rho -> Tc (Sigma, Rho)
 unifyFun (Fun arg res) = return (arg,res)
 unifyFun tau           = do { arg_ty <- newTyVarTy
                             ; res_ty <- newTyVarTy
                             ; unify tau (arg_ty --> res_ty)
                             ; return (arg_ty, res_ty) }
 
------------------------------------------
-occursCheckErr :: MetaTv -> Tau -> Tc ()
+
 -- Raise an occurs-check error
+occursCheckErr :: MetaTv -> Tau -> Tc ()
 occursCheckErr tv ty
   = failTc (text "Occurs check for" <+> quotes (ppr tv) <+> 
             text "in:" <+> ppr ty)
 
-badType :: Tau -> Bool
+
 -- Tells which types should never be encountered during unification
+badType :: Tau -> Bool
 badType (TyVar (BoundTv _)) = True
 badType _               = False

@@ -91,10 +91,12 @@ metaTvs tys = foldr go [] tys
     go (Fun arg res) acc = go arg (go res acc)
     go (ForAll _ ty) acc = go ty acc  -- ForAll binds TyVars only
 
+
+
 freeTyVars :: [Type] -> [TyVar]
 -- Get the free TyVars from a type; no duplicates in result
 freeTyVars tys = foldr (go []) [] tys
-  where 
+  where
     go :: [TyVar]  -- Ignore occurrences of bound type variables
        -> Type    -- Type to look at
        -> [TyVar]  -- Accumulates result
@@ -108,9 +110,11 @@ freeTyVars tys = foldr (go []) [] tys
     go bound (Fun arg res)   acc = go bound arg (go bound res acc)
     go bound (ForAll tvs ty) acc = go (tvs ++ bound) ty acc
 
-tyVarBndrs :: Rho -> [TyVar]
+
+
 -- Get all the binders used in ForAlls in the type, so that
 -- when quantifying an outer for-all we can avoid these inner ones
+tyVarBndrs :: Rho -> [TyVar]
 tyVarBndrs ty = nub (bndrs ty)
   where
     bndrs (ForAll tvs body) = tvs ++ bndrs body
@@ -140,10 +144,8 @@ subst_ty env (ForAll ns rho) = ForAll ns (subst_ty env' rho)
     env' = [(n,ty') | (n,ty') <- env, not (n `elem` ns)]
 
 
------------------------------------
---      Pretty printing class   -- 
------------------------------------
 
+-- Pretty Printing
 class Outputable a where
   ppr :: a -> Doc
 
@@ -223,16 +225,18 @@ pprParendType :: Type -> Doc
 pprParendType ty = pprType tcPrec ty
 
 
-pprType :: Precedence -> Type -> Doc
 -- Print with parens if precedence arg > precedence of type itself
+pprType :: Precedence -> Type -> Doc
 pprType p ty | p >= precType ty = parens (ppr_type ty)
              | otherwise        = ppr_type ty
 
+
+
 ppr_type :: Type -> Doc         -- No parens
 ppr_type (ForAll ns ty) = sep [text "forall" <+> 
-                                  hsep (map ppr ns) <> dot, 
+                                  hsep (map ppr ns) <> dot,
                                ppr ty]
-ppr_type (Fun arg res)  = sep [pprType arrPrec arg <+> text "->", 
+ppr_type (Fun arg res)  = sep [pprType arrPrec arg <+> text "->",
                                pprType (arrPrec-1) res]
 ppr_type (TyCon tc)     = ppr_tc tc
 ppr_type (TyVar n)      = ppr n
