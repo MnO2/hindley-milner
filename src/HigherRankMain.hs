@@ -46,10 +46,13 @@ tcf f = tc_help (parseFile f)
 tyvarA :: TyVar
 tyvarA = BoundTv "a"
 
+tyvarB :: TyVar
+tyvarB = BoundTv "b"
 
 initTypeEnv :: [(Name,Sigma)]
 initTypeEnv
       = [ ("+",    intType --> intType --> intType)
+        , ("Pair2", ForAll [tyvarA, tyvarB] (TyVar tyvarA --> TyVar tyvarB --> pair2Type))
         , ("if",    ForAll [tyvarA ] (boolType --> TyVar tyvarA --> TyVar tyvarA))
         , ("True",  boolType)
         , ("False", boolType)

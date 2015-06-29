@@ -60,21 +60,27 @@ instance Eq TyVar where
 
 type Uniq = Int
 
-data TyCon = IntT | BoolT
-           deriving( Eq )
+data TyCon = IntT | BoolT | Pair2T
+           deriving (Eq)
 
 
 (-->) :: Sigma -> Sigma -> Sigma
 arg --> res = Fun arg res
 
-intType, boolType :: Tau
+
+intType :: Tau
 intType  = TyCon IntT
+
+boolType :: Tau
 boolType = TyCon BoolT
+
+
+pair2Type :: Tau
+pair2Type = TyCon Pair2T
 
 
 
 metaTvs :: [Type] -> [MetaTv]
--- Get the MetaTvs from a type; no duplicates in result
 metaTvs tys = foldr go [] tys
   where
     go (MetaTv tv)   acc
@@ -237,3 +243,4 @@ ppr_type (MetaTv tv)    = ppr tv
 ppr_tc :: TyCon -> Doc
 ppr_tc IntT  = text "Int"
 ppr_tc BoolT = text "Bool"
+ppr_tc Pair2T = text "Pair2"

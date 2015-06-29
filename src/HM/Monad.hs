@@ -5,7 +5,7 @@ module HM.Monad
         extendVarEnv, lookupVar, 
         getEnvTypes, getFreeTyVars, getMetaTyVars,
         newTyVarTy, 
-        instantiate, skolemise, zonkType, quantify,
+        instantiate, shallowskol, deepskol, zonkType, quantify,
         unify, unifyFun,
         newTcRef, readTcRef, writeTcRef
 ) where
@@ -150,18 +150,27 @@ instantiate (ForAll tvs ty)
 instantiate ty
   = return ty
 
-skolemise :: Sigma -> Tc ([TyVar], Rho)
+
 -- Performs deep skolemisation, retuning the 
--- skolem constants and the skolemised type
-skolemise (ForAll tvs ty)  -- Rule PRPOLY
+-- skolem constants and the deepskold type
+deepskol :: Sigma -> Tc ([TyVar], Rho)
+deepskol (ForAll tvs ty)  -- Rule PRPOLY
   = do { sks1 <- mapM newSkolemTyVar tvs
-       ; (sks2, ty') <- skolemise (substTy tvs (map TyVar sks1) ty)
+       ; (sks2, ty') <- deepskol (substTy tvs (map TyVar sks1) ty)
        ; return (sks1 ++ sks2, ty') }
-skolemise (Fun arg_ty res_ty)  -- Rule PRFUN
-  = do { (sks, res_ty') <- skolemise res_ty
+deepskol (Fun arg_ty res_ty)  -- Rule PRFUN
+  = do { (sks, res_ty') <- deepskol res_ty
        ; return (sks, Fun arg_ty res_ty') }
-skolemise ty       -- Rule PRMONO
+deepskol ty       -- Rule PRMONO
   = return ([], ty)
+
+
+
+shallowskol :: Sigma -> Tc ([TyVar], Rho)
+shallowskol (ForAll tvs ty) = do { sks1 <- mapM newSkolemTyVar tvs
+                                 ; return (sks1, ty)
+                                 }
+shallowskol ty = return ([], ty)
 
 ------------------------------------------
 --      Quantification                  --
@@ -177,6 +186,8 @@ quantify tvs ty
     used_bndrs = tyVarBndrs ty  -- Avoid quantified type variables in use
     new_bndrs  = take (length tvs) (allBinders \\ used_bndrs)
     bind (tv, name) = writeTv tv (TyVar name)
+
+
 
 allBinders :: [TyVar]    -- a,b,..z, a1, b1,... z1, a2, b2,... 
 allBinders = [ BoundTv [x]          | x <- ['a'..'z'] ] ++

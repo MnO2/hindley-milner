@@ -49,10 +49,11 @@ tyvarA = BoundTv "a"
 tyvarB :: TyVar
 tyvarB = BoundTv "b"
 
+
 initTypeEnv :: [(Name,Sigma)]
 initTypeEnv
       = [ ("+",    intType --> intType --> intType)
-        , ("Pair", ForAll [tyvarA, tyvarB] (TyVar tyvarA --> TyVar tyvarB))
+        , ("Pair2", ForAll [tyvarA, tyvarB] (TyVar tyvarA --> TyVar tyvarB --> pair2Type))
         , ("if",    ForAll [tyvarA] (boolType --> TyVar tyvarA --> TyVar tyvarA))
         , ("True",  boolType)
         , ("False", boolType)
@@ -79,6 +80,7 @@ parseFile filename
          Left err -> do { putStrLn ("Parse error: " ++ show err) 
                 ; return Nothing }
          Right ans -> return (Just ans) }
+
 
 
 parseString :: String -> IO (Maybe Term)

@@ -72,7 +72,7 @@ inferSigma e
 
 checkSigma :: Term -> Sigma -> Tc ()
 checkSigma expr sigma
-  = do { (skol_tvs, rho) <- skolemise sigma
+  = do { (skol_tvs, rho) <- shallowskol sigma
        ; checkRho expr rho
        ; env_tys <- getEnvTypes
        ; esc_tvs <- getFreeTyVars (sigma : env_tys)

@@ -29,7 +29,7 @@ identifier :: CharParser st String
 identifier  = P.identifier lexer
 
 dot        :: CharParser st String
-dot	        = P.dot lexer
+dot          = P.dot lexer
 
 whiteSpace :: CharParser st ()
 whiteSpace  = P.whiteSpace lexer
@@ -52,7 +52,7 @@ instance Read Type where
 
 
 parseTerm :: Parser Term
-parseTerm = do	{ whiteSpace
+parseTerm = do  { whiteSpace
                 ; t <- readTerm
                 ; eof
                 ; return t 
@@ -78,8 +78,9 @@ var = do { v <- identifier; return (Var v) }
 
 
 app :: Parser Term
-app = do { (fun:args) <- many1 atom; 
-	   return (foldl App fun args) }
+app = do { (fun:args) <- many1 atom
+         ; return (foldl App fun args)
+         }
 
 lam :: Parser Term
 lam = do { reservedOp "\\"

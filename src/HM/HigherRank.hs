@@ -72,14 +72,16 @@ inferSigma :: Term -> Tc Sigma
 inferSigma e
    = do { exp_ty <- inferRho e
         ; env_tys <- getEnvTypes
-	; env_tvs <- getMetaTyVars env_tys
+        ; env_tvs <- getMetaTyVars env_tys
         ; res_tvs <- getMetaTyVars [exp_ty]
         ; let forall_tvs = res_tvs \\ env_tvs
         ; quantify forall_tvs exp_ty }
 
+
+
 checkSigma :: Term -> Sigma -> Tc ()
 checkSigma expr sigma
-  = do { (skol_tvs, rho) <- skolemise sigma
+  = do { (skol_tvs, rho) <- deepskol sigma
        ; checkRho expr rho
        ; env_tys <- getEnvTypes
        ; esc_tvs <- getFreeTyVars (sigma : env_tys)
@@ -91,7 +93,7 @@ checkSigma expr sigma
 
 subsCheck :: Sigma -> Sigma -> Tc ()
 subsCheck sigma1 sigma2        -- Rule DEEP-SKOL
-  = do { (skol_tvs, rho2) <- skolemise sigma2
+  = do { (skol_tvs, rho2) <- deepskol sigma2
        ; subsCheckRho sigma1 rho2
        ; esc_tvs <- getFreeTyVars [sigma1,sigma2]
        ; let bad_tvs = filter (`elem` esc_tvs) skol_tvs
@@ -102,27 +104,29 @@ subsCheck sigma1 sigma2        -- Rule DEEP-SKOL
                       nest 2 (ppr sigma2)])
     }
 
-subsCheckRho :: Sigma -> Rho -> Tc ()
 
-subsCheckRho sigma1@(ForAll _ _) rho2	 -- Rule SPEC
+
+subsCheckRho :: Sigma -> Rho -> Tc ()
+subsCheckRho sigma1@(ForAll _ _) rho2   -- Rule SPEC
   = do { rho1 <- instantiate sigma1
        ; subsCheckRho rho1 rho2 }
-
 subsCheckRho rho1 (Fun a2 r2)            -- Rule FUN
   = do { (a1,r1) <- unifyFun rho1; subsCheckFun a1 r1 a2 r2 }
-
 subsCheckRho (Fun a1 r1) rho2            -- Rule FUN
   = do { (a2,r2) <- unifyFun rho2; subsCheckFun a1 r1 a2 r2 }
-
 subsCheckRho tau1 tau2                   -- Rule MONO
   = unify tau1 tau2    -- Revert to ordinary unification
+
+
 
 subsCheckFun :: Sigma -> Rho -> Sigma -> Rho -> Tc ()
 subsCheckFun a1 r1 a2 r2 
   = do { subsCheck a2 a1 ; subsCheckRho r1 r2 }
 
 
+
 instSigma :: Sigma -> Expected Rho -> Tc ()
 instSigma t1 (Check t2) = subsCheckRho t1 t2
 instSigma t1 (Infer r)  = do { t1' <- instantiate t1
                              ; writeTcRef r t1' }
+
