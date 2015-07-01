@@ -133,6 +133,7 @@ readSigma = choice [try (parens readSigma), sigma, readRho]
 atomSigma :: Parser Sigma
 atomSigma = choice [try (parens sigma), atomRho]
 
+
 sigma :: Parser Sigma
 sigma = do { reserved "forall" ;
              tvs <- readTvs ;
@@ -164,16 +165,19 @@ atomTau :: Parser Tau
 atomTau = choice [try tvar, tcon, parens readTau]
 
 
-tvar, tfun, tcon :: Parser Tau
+tvar :: Parser Tau
 tvar = do { v <- identifier;
             if (v == "Int" || v == "Bool")
             then fail "" else return ();
             return (TyVar (BoundTv v)) 
           }
+
+tfun :: Parser Tau
 tfun = do { arg <- atomTau ; reservedOp "->";
             res <- readTau; return (Fun arg res) 
           }
 
+tcon :: Parser Tau
 tcon = choice [try $ do { "Int"  <- identifier; return intType },
                      do { "Bool" <- identifier; return boolType }]
 

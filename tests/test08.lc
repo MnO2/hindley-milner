@@ -1,0 +1,2 @@
+let g = \(f1 :: forall a. a -> a). f1
+in g

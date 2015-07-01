@@ -33,7 +33,6 @@ main = do
           loop
 
 
-
 tcs :: String -> IO ()
 tcs s = tc_help (parseString s)
 

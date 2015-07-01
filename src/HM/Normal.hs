@@ -58,6 +58,7 @@ tcRho (Lam var body) (Infer ref)
 
 tcRho (Let var rhs body) exp_ty
   = do { var_ty <- inferSigma rhs
+       ; traceM $ ("tcRho Let var_ty = " ++ show var_ty)
        ; extendVarEnv var var_ty (tcRho body exp_ty)
        }
 

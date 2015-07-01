@@ -284,7 +284,7 @@ unifyUnboundVar tv1 ty2
             writeTv tv1 ty2 }
 
 
---      (arg,res) <- unifyFunTy fun
+-- (arg,res) <- unifyFunTy fun
 -- unifies 'fun' with '(arg -> res)'
 unifyFun :: Rho -> Tc (Sigma, Rho)
 unifyFun (Fun arg res) = return (arg,res)
